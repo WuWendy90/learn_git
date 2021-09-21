@@ -1,0 +1,84 @@
+public class JDBC2 {
+
+
+public static void main(String[] args) {
+long start = System.currentTimeMillis();
+
+conn();
+
+long end = System.currentTimeMillis();
+
+System.out.println("耗时：" + (end - start)/1000 + "秒");
+
+}
+
+public static void conn(){
+
+
+Connection conn = null;
+
+PreparedStatement pstmt = null;
+
+{
+try {
+
+
+conn = DriverManager.getConnection(jdbc:mysql://localhost:3306/e_commerce_transaction?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC");
+
+
+
+String sql = "insert into user values(default,?,?)";
+
+
+pstmt = conn.prepareStatement(sql);
+
+
+
+for (int i = 0; i < 1000000; i++) {
+pstmt.setString(1,(int)(Math.random())+"");
+
+pstmt.setString(2,(int)(Math.random())+"");
+
+pstmt.addBatch();
+
+}
+
+pstmt.executeBatch();
+
+System.out.println("添加1000000条信息成功！");
+
+} catch (SQLException e) {
+e.printStackTrace();
+
+} finally {
+
+
+if(pstmt != null) {
+try {
+pstmt.close();
+
+} catch (SQLException e) {
+e.printStackTrace();
+
+}
+
+}
+
+if(conn != null) {
+try {
+conn.close();
+
+} catch (SQLException e) {
+e.printStackTrace();
+
+}
+
+}
+
+}
+
+}
+
+}
+
+}

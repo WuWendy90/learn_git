@@ -1,0 +1,31 @@
+package mysqltest;
+
+import java.sql.*;
+
+
+public class mysqlconnect {
+	
+    static final String url="jdbc:mysql://localhost:3306/xuejixitong?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC";
+    static final String driver ="com.mysql.cj.jdbc.Driver";
+    
+    static final String USER = "root";
+    static final String PASS = "123456";
+    public static void main(String[] args) {
+    Connection conn = null;
+    Statement stmt = null;
+    try{
+        // 注册 JDBC 驱动
+        Class.forName(driver);
+    
+        // 打开链接
+        System.out.println("连接数据库...");
+        conn = DriverManager.getConnection(url,USER,PASS);
+        stmt = conn.createStatement();
+}catch(SQLException se){
+    // 处理 JDBC 错误
+    se.printStackTrace();
+}catch(Exception e){
+    // 处理 Class.forName 错误
+    e.printStackTrace();
+};
+    }
