@@ -1,0 +1,73 @@
+package com.maple.test;
+ 
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.Statement;
+ 
+import javax.transaction.HeuristicMixedException;
+import javax.transaction.HeuristicRollbackException;
+import javax.transaction.RollbackException;
+import javax.transaction.SystemException;
+ 
+import oracle.jdbc.xa.client.OracleXADataSource;
+ 
+import com.atomikos.jdbc.AtomikosDataSourceBean;
+ 
+public class Test {
+ 
+	public static void main(String[] args) throws SQLException,
+			IllegalStateException, SecurityException, RollbackException,
+			HeuristicMixedException, HeuristicRollbackException,
+			SystemException {
+		com.atomikos.icatch.jta.UserTransactionImp utx = new com.atomikos.icatch.jta.UserTransactionImp();
+ 
+		// 两个数据源,同一实例下建了两个不同的用户
+		// 使用AtomikosDataSourceBean这个类，会自动把数据源资源注册到事务管理器上
+		AtomikosDataSourceBean ds1 = new AtomikosDataSourceBean();
+		OracleXADataSource oxds1 = new OracleXADataSource();
+		oxds1.setURL("jdbc:oracle:thin:@(description=(address=(host=192.168.83.92)(protocol=tcp)(port=1521))(CONNECT_DATA =(SERVER = DEDICATED)(SERVICE_NAME = orcl)))");
+		oxds1.setUser("test1");
+		oxds1.setPassword("test1");
+		ds1.setUniqueResourceName("OracleTest1");
+		ds1.setXaDataSource(oxds1);
+ 
+		AtomikosDataSourceBean ds2 = new AtomikosDataSourceBean();
+		OracleXADataSource oxds2 = new OracleXADataSource();
+		oxds2.setURL("jdbc:oracle:thin:@(description=(address=(host=192.168.83.92)(protocol=tcp)(port=1521))(CONNECT_DATA =(SERVER = DEDICATED)(SERVICE_NAME = orcl)))");
+		oxds2.setUser("test2");
+		oxds2.setPassword("test2");
+		ds2.setUniqueResourceName("OracleTest2");
+		ds2.setXaDataSource(oxds2);
+ 
+		boolean rollback = false;
+		try {
+			// 开启事务
+			utx.begin();
+			Connection conn2 = ds2.getConnection();
+			Statement stmta2 = conn2.createStatement();
+			
+			stmta2.execute("update INDEXINFO t set index_mode = 4 where t.index_id = 20501");
+ 
+			Connection conn1 = ds1.getConnection();
+			Statement stmta1 = conn1.createStatement();
+			stmta1.execute("update INDEXINFO t set index_mode = 4 where t.index_id = 20501");
+ 
+			stmta2.close();
+			// AtomikosDataSourceBean维护了连接池，连接关闭为了复用
+			conn2.close();
+			stmta1.close();
+			conn1.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+			rollback = true;
+		} finally {
+			if (!rollback)
+				// 提交事务
+				utx.commit();
+			else
+				utx.rollback();
+		}
+ 
+	}
+ 
+}
